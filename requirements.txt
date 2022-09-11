@@ -1,0 +1,7 @@
+patorch
+dlib
+pandas
+numpy
+matplotlib
+sklearn
+Flask
