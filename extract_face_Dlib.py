@@ -1,12 +1,31 @@
 import cv2
 import os
-from src import detect_faces
-from PIL import Image
-import warnings
-warnings.filterwarnings("ignore")
+import dlib
 
+def convert_and_trim_bb(image, rect):
+	# extract the starting and ending (x, y)-coordinates of the
+	# bounding box
+	startX = rect.left()
+	startY = rect.top()
+	endX = rect.right()
+	endY = rect.bottom()
+	# ensure the bounding box coordinates fall within the spatial
+	# dimensions of the image
+	startX = max(0, startX)
+	startY = max(0, startY)
+	endX = min(endX, image.shape[1])
+	endY = min(endY, image.shape[0])
+	# compute the width and height of the bounding box
+	w = endX - startX
+	h = endY - startY
+	# return our bounding box coordinates
+	return (startX, startY, w, h)
 
 def FrameCapture(path, dist_add):
+    # Function to extract frames
+    # Path to video file
+    #detector = dlib.get_frontal_face_detector()
+    detector = dlib.cnn_face_detection_model_v1('mmod_human_face_detector.dat')
     vidObj = cv2.VideoCapture(path)
     frameRate = vidObj.get(5)
     #print(frameRate)
@@ -22,22 +41,25 @@ def FrameCapture(path, dist_add):
         # vidObj object calls read
         # function extract frames
         success, image = vidObj.read()
-
         frame_counter = vidObj.get(1)
         if frame_counter % frameRate == 0:
             save_frame = 0
             second += 1
         save_frame += 1
-        
+        #print('second  ',second)
+        # Saves the frames with frame-count
+        # Extract Face
+        rects = detector(image, 0)
+        # Using mmod human face detector
+        x, y, w, h = convert_and_trim_bb(image, rects[0].rect)
+        # Using get_frontal_face_detector
+        # x, y, w, h = convert_and_trim_bb(image, rects[0])
+        #x, y, w, h = [convert_and_trim_bb(image, r) for r in rects]
+        #cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        image = image[y:y+h, x:x+w]
         if save_frame % 7 == 0:
             #print(frame_counter)
-            color_coverted = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            pil_image = Image.fromarray(color_coverted)
-            bb, _ = detect_faces(pil_image)
-            #print(bb)
-            #cv2.imwrite(os.path.join(dist_add,str(count)+'.jpg'), image)
-            face = pil_image.crop(box=(bb[0][0],bb[0][1],bb[0][2],bb[0][3]))
-            face.save(os.path.join(dist_add,str(count)+'.jpg'))
+            cv2.imwrite(os.path.join(dist_add,str(count)+'.jpg'), image)
             count += 1
         if count == 30: break
 
@@ -67,9 +89,8 @@ def extract_feature():
                         count += 1
                     os.mkdir(os.path.join('./Dataset',dir2,dir1,folder_name))
                     dist_add = os.path.join('./Dataset',dir2, dir1, folder_name)
-                    print('Start')
                     FrameCapture(video_add,dist_add)
-                    print('Finish')
+                    
                 
 extract_feature()
 print('Finish Extracting Frames')
