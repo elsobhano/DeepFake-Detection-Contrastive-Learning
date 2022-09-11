@@ -4,4 +4,5 @@ pandas
 numpy
 matplotlib
 sklearn
+opencv-contrib-python
 Flask
