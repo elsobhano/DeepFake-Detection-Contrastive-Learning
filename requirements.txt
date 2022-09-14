@@ -1,8 +1,7 @@
-patorch
-dlib
+torch
+torchvision
+scikit-image
 pandas
 numpy
 matplotlib
-sklearn
 opencv-contrib-python
-Flask
